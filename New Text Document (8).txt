@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENAR Market Analyzer Pro • Real-time</title>
+<style>
+:root{
+    --bg:#07090d;
+    --card:#10151d;
+    --border:#1d2633;
+    --text:#ffffff;
+    --muted:#8b98a9;
+    --green:#00e676;
+    --red:#ff5252;
+    --yellow:#ffca28;
+    --blue:#4da3ff;
+    --purple:#b388ff;
+}
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:Inter,Arial,sans-serif;
+    padding:20px;
+}
+.container{
+    max-width:1600px;
+    margin:auto;
+}
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:25px;
+}
+.logo h1{
+    font-size:28px;
+}
+.logo span{
+    color:var(--blue);
+}
+.logo p{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:5px;
+}
+.status{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:red;
+    transition:0.3s;
+}
+.dot.online{
+    background:var(--green);
+    box-shadow:0 0 10px var(--green);
+    animation:pulse 1.5s infinite;
+}
+@keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:0.5;}
+}
+.market-select{
+    padding:10px 15px;
+    border-radius:10px;
+    background:#161c25;
+    color:white;
+    border:1px solid var(--border);
+    font-size:14px;
+    cursor:pointer;
+    font-weight:500;
+}
+.btn{
+    padding:12px 24px;
+    border:none;
+    border-radius:10px;
+    background:var(--blue);
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:14px;
+    transition:0.2s;
+}
+.btn:hover{
+    opacity:0.8;
+    transform:scale(1.02);
+}
+.btn.stop{
+    background:var(--red);
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+    gap:20px;
+}
+.card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:20px;
+    backdrop-filter:blur(4px);
+    transition:0.2s;
+}
+.card:hover{
+    border-color:rgba(77,163,255,0.3);
+}
+.card-title{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:15px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    font-weight:600;
+}
+.price{
+    font-size:42px;
+    font-weight:700;
+    font-family:monospace;
+    margin-bottom:10px;
+}
+.row{
+    display:flex;
+    justify-content:space-between;
+    margin-top:12px;
+    padding-bottom:12px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.row span:first-child{
+    color:var(--muted);
+    font-size:13px;
+}
+.signal{
+    text-align:center;
+    padding:25px;
+    border-radius:15px;
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:15px;
+    transition:0.2s;
+}
+.buy{
+    background:rgba(0,230,118,.12);
+    color:var(--green);
+    box-shadow:0 0 15px rgba(0,230,118,0.2);
+}
+.sell{
+    background:rgba(255,82,82,.12);
+    color:var(--red);
+    box-shadow:0 0 15px rgba(255,82,82,0.2);
+}
+.wait{
+    background:rgba(255,202,40,.12);
+    color:var(--yellow);
+}
+.console{
+    margin-top:20px;
+    height:280px;
+    overflow:auto;
+    background:#0a0e14;
+    border-radius:15px;
+    padding:15px;
+    font-family:'Courier New',monospace;
+    font-size:12px;
+    border:1px solid var(--border);
+}
+.log{
+    margin-bottom:6px;
+    font-size:12px;
+    line-height:1.4;
+    border-left:2px solid transparent;
+    padding-left:8px;
+}
+.log:hover{
+    background:rgba(255,255,255,0.03);
+}
+.green{color:var(--green);}
+.red{color:var(--red);}
+.yellow{color:var(--yellow);}
+.blue{color:var(--blue);}
+.purple{color:var(--purple);}
+.ob-indicator{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    margin-right:6px;
+}
+.ob-active{
+    background:var(--green);
+    box-shadow:0 0 6px var(--green);
+}
+.btn-small{
+    padding:5px 12px;
+    font-size:11px;
+    background:rgba(77,163,255,0.2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    cursor:pointer;
+    color:var(--text);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<div class="header">
+    <div class="logo">
+        <h1> ENAR <span>Market Analyzer Pro</span></h1>
+        <p>Smart Money Concepts • Realtime • WebSocket</p>
+    </div>
+    <div class="status">
+        <div id="statusDot" class="dot"></div>
+        <span id="statusText">Offline</span>
+    </div>
+    <select id="symbolSelect" class="market-select">
+        <option value="BTCUSDT">BTCUSDT</option>
+        <option value="ETHUSDT">ETHUSDT</option>
+        <option value="BNBUSDT">BNBUSDT</option>
+        <option value="SOLUSDT">SOLUSDT</option>
+        <option value="XRPUSDT">XRPUSDT</option>
+    </select>
+    <button class="btn" id="startBtn">? Start Analysis</button>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <div class="card-title">Market Data</div>
+        <div class="price" id="currentPrice">---</div>
+        <div class="row"><span>24h Change</span><span id="change24">---</span></div>
+        <div class="row"><span>Trend (HTF)</span><span id="trend">---</span></div>
+        <div class="row"><span>VWAP</span><span id="vwap">---</span></div>
+        <div class="row"><span>RSI (14)</span><span id="rsi">---</span></div>
+        <div class="row"><span>ATR (14)</span><span id="atr">---</span></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Market Structure (SMC)</div>
+        <div class="row"><span>Break of Structure (BOS)</span><span id="bos">? NO</span></div>
+        <div class="row"><span>Change of Character</span><span id="choch">? NO</span></div>
+        <div class="row"><span>Liquidity Sweep</span><span id="sweep">NONE</span></div>
+        <div class="row"><span>Order Block</span><span id="ob">NONE</span></div>
+        <div class="row"><span>Fair Value Gap</span><span id="fvg">NONE</span></div>
+        <div class="row"><span>MSS / CHoCH Confirmed</span><span id="mss">?</span></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">?? Trading Signal</div>
+        <div id="signalBox" class="signal wait">AWAITING DATA</div>
+        <div class="row"><span>Entry Zone</span><span id="entry">---</span></div>
+        <div class="row"><span>Stop Loss</span><span id="sl">---</span></div>
+        <div class="row"><span>Take Profit 1</span><span id="tp">---</span></div>
+        <div class="row"><span>Confidence</span><span id="confidence">---</span></div>
+        <div class="row"><span>Risk/Reward</span><span id="rr">---</span></div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="card-title">Analysis Console • Realtime Events</div>
+        <button class="btn-small" id="clearConsoleBtn">Clear</button>
+    </div>
+    <div id="console" class="console">
+        <div class="log blue">[SYSTEM] SMC Analyzer Pro v3.0 Ready</div>
+        <div class="log blue">[SYSTEM] WebSocket + Multi-Timeframe Ready</div>
+    </div>
+</div>
+</div>
+
+<script>
+// =========================
+// ????????????
+// =========================
+const CONFIG = {
+    updateInterval: 5000,        // REST fallback ?????? 5 ???
+    useWebSocket: true,
+    maxConsoleLines: 500,
+    atrPeriod: 14,
+    rsiPeriod: 14
+};
+
+let isRunning = false;
+let intervalId = null;
+let ws = null;
+let currentSymbol = "BTCUSDT";
+let currentPrice = 0;
+let historicalCandles = [];
+let lastAnalysis = null;
+
+// DOM ????????
+const startBtn = document.getElementById("startBtn");
+const symbolSelect = document.getElementById("symbolSelect");
+const statusText = document.getElementById("statusText");
+const statusDot = document.getElementById("statusDot");
+const consoleBox = document.getElementById("console");
+const clearConsoleBtn = document.getElementById("clearConsoleBtn");
+
+// =========================
+// ?????? ? ????????????
+// =========================
+function log(message, color = "#fff") {
+    if (!consoleBox) return;
+    const div = document.createElement("div");
+    div.className = "log";
+    div.style.color = color;
+    const time = new Date().toLocaleTimeString();
+    div.textContent = `[${time}] ${message}`;
+    consoleBox.appendChild(div);
+    
+    while(consoleBox.children.length > CONFIG.maxConsoleLines) {
+        consoleBox.removeChild(consoleBox.firstChild);
+    }
+    consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+// =========================
+// ?????? ? BINANCE REST API
+// =========================
+async function getBinanceCandles(symbol, interval = "1h", limit = 200) {
+    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+}
+
+async function get24hrTicker(symbol) {
+    const url = `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Ticker error`);
+    return await response.json();
+}
+
+function parseCandles(raw) {
+    return raw.map(c => ({
+        time: Number(c[0]),
+        open: Number(c[1]),
+        high: Number(c[2]),
+        low: Number(c[3]),
+        close: Number(c[4]),
+        volume: Number(c[5])
+    }));
+}
+
+// =========================
+// ??????????? ??????????
+// =========================
+function calculateRSI(candles, period = 14) {
+    if (candles.length < period + 1) return 50;
+    let gains = 0, losses = 0;
+    for (let i = candles.length - period; i < candles.length; i++) {
+        const diff = candles[i].close - candles[i-1].close;
+        if (diff > 0) gains += diff;
+        else losses += Math.abs(diff);
+    }
+    if (losses === 0) return 100;
+    const rs = gains / losses;
+    return 100 - (100 / (1 + rs));
+}
+
+function calculateATR(candles, period = 14) {
+    if (candles.length < period + 1) return 0;
+    let trs = [];
+    for (let i = 1; i < candles.length; i++) {
+        const high = candles[i].high;
+        const low = candles[i].low;
+        const prevClose = candles[i-1].close;
+        const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+        trs.push(tr);
+    }
+    const recent = trs.slice(-period);
+    return recent.reduce((a,b) => a + b, 0) / period;
+}
+
+function calculateVWAP(candles) {
+    let pv = 0, vol = 0;
+    candles.forEach(c => {
+        pv += ((c.high + c.low + c.close) / 3) * c.volume;
+        vol += c.volume;
+    });
+    return vol === 0 ? 0 : pv / vol;
+}
+
+function calculateEMA(candles, period) {
+    const closes = candles.map(c => c.close);
+    const k = 2 / (period + 1);
+    let ema = closes[0];
+    for (let i = 1; i < closes.length; i++) {
+        ema = closes[i] * k + ema * (1 - k);
+    }
+    return ema;
+}
+
+// =========================
+// SMC ????????? (??????????)
+// =========================
+function getSwingPoints(candles, lookback = 3) {
+    const swings = [];
+    for (let i = lookback; i < candles.length - lookback; i++) {
+        let swingHigh = true, swingLow = true;
+        for (let j = i - lookback; j <= i + lookback; j++) {
+            if (j === i) continue;
+            if (candles[j].high >= candles[i].high) swingHigh = false;
+            if (candles[j].low <= candles[i].low) swingLow = false;
+        }
+        if (swingHigh) swings.push({ type: "HIGH", index: i, price: candles[i].high, time: candles[i].time });
+        if (swingLow) swings.push({ type: "LOW", index: i, price: candles[i].low, time: candles[i].time });
+    }
+    return swings;
+}
+
+function detectMarketStructure(candles) {
+    if (candles.length < 50) return { trend: "UNKNOWN", bos: false, choch: false, mss: false };
+    
+    const swings = getSwingPoints(candles, 3);
+    if (swings.length < 6) return { trend: "SIDEWAYS", bos: false, choch: false, mss: false };
+    
+    const recent = swings.slice(-8);
+    const highs = recent.filter(s => s.type === "HIGH");
+    const lows = recent.filter(s => s.type === "LOW");
+    
+    if (highs.length < 2 || lows.length < 2) return { trend: "SIDEWAYS", bos: false, choch: false, mss: false };
+    
+    const lastHigh = highs[highs.length-1];
+    const prevHigh = highs[highs.length-2];
+    const lastLow = lows[lows.length-1];
+    const prevLow = lows[lows.length-2];
+    
+    let trend = "SIDEWAYS";
+    let bos = false, choch = false, mss = false;
+    
+    if (lastHigh.price > prevHigh.price && lastLow.price > prevLow.price) trend = "BULLISH";
+    if (lastHigh.price < prevHigh.price && lastLow.price < prevLow.price) trend = "BEARISH";
+    
+    const current = candles[candles.length-1];
+    
+    if (trend === "BULLISH" && current.close > lastHigh.price) bos = true;
+    if (trend === "BEARISH" && current.close < lastLow.price) bos = true;
+    if (trend === "BULLISH" && current.close < lastLow.price) choch = true;
+    if (trend === "BEARISH" && current.close > lastHigh.price) choch = true;
+    
+    // MSS (Market Structure Shift) - ????????????? CHOCH
+    if (choch) mss = true;
+    
+    return { trend, bos, choch, mss, lastHigh: lastHigh?.price, lastLow: lastLow?.price, swings };
+}
+
+function detectLiquiditySweep(candles) {
+    if (candles.length < 30) return null;
+    const current = candles[candles.length-1];
+    const recent = candles.slice(-25, -1);
+    const highest = Math.max(...recent.map(c => c.high));
+    const lowest = Math.min(...recent.map(c => c.low));
+    
+    if (current.high > highest && current.close < highest) 
+        return { type: "?? BUY SIDE SWEEP", level: highest };
+    if (current.low < lowest && current.close > lowest) 
+        return { type: "?? SELL SIDE SWEEP", level: lowest };
+    return null;
+}
+
+function detectFVG(candles) {
+    for (let i = candles.length-5; i >= 2 && i < candles.length; i++) {
+        const c1 = candles[i-2], c2 = candles[i-1], c3 = candles[i];
+        if (c1.high < c3.low) return { type: "BULLISH FVG", top: c3.low, bottom: c1.high };
+        if (c1.low > c3.high) return { type: "BEARISH FVG", top: c1.low, bottom: c3.high };
+    }
+    return null;
+}
+
+function detectOrderBlock(candles) {
+    if (candles.length < 15) return null;
+    for (let i = candles.length-8; i < candles.length-2; i++) {
+        const current = candles[i];
+        const next = candles[i+1];
+        const next2 = candles[i+2];
+        
+        if (current.close < current.open && next.close > next.open && next2.close > next2.open) {
+            return { type: "?? BULLISH OB", high: current.high, low: current.low, strength: "HIGH" };
+        }
+        if (current.close > current.open && next.close < next.open && next2.close < next2.open) {
+            return { type: "?? BEARISH OB", high: current.high, low: current.low, strength: "HIGH" };
+        }
+    }
+    return null;
+}
+
+function calculateConfidence(trend, rsi, sweep, fvg, ob, bos) {
+    let score = 0;
+    if (trend === "BULLISH" || trend === "BEARISH") score += 20;
+    if (trend !== "SIDEWAYS") score += 10;
+    if ((trend === "BULLISH" && rsi > 45 && rsi < 70) || (trend === "BEARISH" && rsi < 55 && rsi > 30)) score += 20;
+    else if (rsi > 30 && rsi < 70) score += 10;
+    if (sweep) score += 20;
+    if (fvg) score += 15;
+    if (ob) score += 15;
+    if (bos) score += 10;
+    return Math.min(score, 100);
+}
+
+function buildSignal(structure, rsi, sweep, fvg, ob) {
+    if (structure.trend === "BULLISH" && rsi > 40 && sweep?.type.includes("SELL")) return "BUY";
+    if (structure.trend === "BULLISH" && ob?.type.includes("BULLISH") && rsi < 65) return "BUY";
+    if (structure.trend === "BEARISH" && rsi < 60 && sweep?.type.includes("BUY")) return "SELL";
+    if (structure.trend === "BEARISH" && ob?.type.includes("BEARISH") && rsi > 35) return "SELL";
+    if (structure.choch && structure.trend === "BULLISH") return "BUY";
+    if (structure.choch && structure.trend === "BEARISH") return "SELL";
+    return "NO TRADE";
+}
+
+// =========================
+// ?????????? UI
+// =========================
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = value;
+}
+
+function updateSignalBox(signal) {
+    const box = document.getElementById("signalBox");
+    if (!box) return;
+    box.className = "signal";
+    if (signal === "BUY") { box.classList.add("buy"); box.textContent = "?? BUY ??"; }
+    else if (signal === "SELL") { box.classList.add("sell"); box.textContent = "?? SELL ??"; }
+    else { box.classList.add("wait"); box.textContent = "? NO TRADE"; }
+}
+
+// =========================
+// ???????? ??????
+// =========================
+async function analyzeMarket() {
+    if (!isRunning) return;
+    
+    try {
+        const symbol = symbolSelect.value;
+        const ticker = await get24hrTicker(symbol);
+        const raw = await getBinanceCandles(symbol, "1h", 200);
+        const candles = parseCandles(raw);
+        historicalCandles = candles;
+        
+        if (candles.length === 0) throw new Error("No candle data");
+        
+        const current = candles[candles.length-1];
+        currentPrice = current.close;
+        
+        const rsi = calculateRSI(candles, CONFIG.rsiPeriod);
+        const atr = calculateATR(candles, CONFIG.atrPeriod);
+        const vwap = calculateVWAP(candles);
+        const structure = detectMarketStructure(candles);
+        const sweep = detectLiquiditySweep(candles);
+        const fvg = detectFVG(candles);
+        const ob = detectOrderBlock(candles);
+        const confidence = calculateConfidence(structure.trend, rsi, sweep, fvg, ob, structure.bos);
+        const signal = buildSignal(structure, rsi, sweep, fvg, ob);
+        
+        let stopLoss = 0, takeProfit = 0;
+        if (signal === "BUY") {
+            stopLoss = current.close - atr * 1.2;
+            takeProfit = current.close + atr * 2.5;
+        } else if (signal === "SELL") {
+            stopLoss = current.close + atr * 1.2;
+            takeProfit = current.close - atr * 2.5;
+        }
+        
+        const rr = (stopLoss && takeProfit) ? Math.abs((takeProfit - current.close) / (stopLoss - current.close)).toFixed(2) : "---";
+        const change24 = ((current.close - parseFloat(ticker.openPrice)) / parseFloat(ticker.openPrice) * 100).toFixed(2);
+        const changeColor = change24 >= 0 ? "#00e676" : "#ff5252";
+        
+        setText("currentPrice", `$${current.close.toFixed(2)}`);
+        setText("change24", `<span style="color:${changeColor}">${change24 >= 0 ? '+' : ''}${change24}%</span>`);
+        setText("trend", structure.trend === "BULLISH" ? "?? BULLISH" : (structure.trend === "BEARISH" ? "?? BEARISH" : "?? SIDEWAYS"));
+        setText("vwap", vwap.toFixed(2));
+        setText("rsi", `${rsi.toFixed(1)} ${rsi > 70 ? '??' : (rsi < 30 ? '??' : '?')}`);
+        setText("atr", atr.toFixed(2));
+        setText("bos", structure.bos ? "? YES (BOS Confirmed)" : "? NO");
+        setText("choch", structure.choch ? "? YES (CHoCH)" : "? NO");
+        setText("mss", structure.mss ? "? MSS" : "?");
+        setText("sweep", sweep ? sweep.type : "NONE");
+        setText("fvg", fvg ? fvg.type : "NONE");
+        setText("ob", ob ? ob.type : "NONE");
+        setText("entry", current.close.toFixed(2));
+        setText("sl", stopLoss ? stopLoss.toFixed(2) : "---");
+        setText("tp", takeProfit ? takeProfit.toFixed(2) : "---");
+        setText("confidence", `${confidence}% ${confidence >= 70 ? '??' : (confidence >= 50 ? '??' : '??')}`);
+        setText("rr", rr !== "---" ? `1:${rr}` : "---");
+        updateSignalBox(signal);
+        
+        if (signal !== "NO TRADE" && (!lastAnalysis || lastAnalysis.signal !== signal)) {
+            log(`?? SIGNAL: ${signal} on ${symbol} @ ${current.close.toFixed(2)} | Confidence: ${confidence}% | RR: 1:${rr}`, signal === "BUY" ? "#00ff95" : "#ff5252");
+        } else if (signal === "NO TRADE") {
+            log(`?? Analysis: ${structure.trend} | RSI:${rsi.toFixed(0)} | No clear signal`, "#8b98a9");
+        }
+        
+        lastAnalysis = { signal, price: current.close, confidence, time: Date.now() };
+        
+    } catch (error) {
+        log(`? Error: ${error.message}`, "#ff5252");
+        console.error(error);
+    }
+}
+
+// =========================
+// WEBSOCKET (Realtime Price)
+// =========================
+function connectWebSocket() {
+    if (ws) ws.close();
+    
+    const symbolLower = currentSymbol.toLowerCase();
+    const streamUrl = `wss://stream.binance.com:9443/ws/${symbolLower}@ticker`;
+    
+    try {
+        ws = new WebSocket(streamUrl);
+        
+        ws.onopen = () => {
+            log(`?? WebSocket connected for ${currentSymbol}`, "#4da3ff");
+        };
+        
+        ws.onmessage = (event) => {
+            if (!isRunning) return;
+            try {
+                const data = JSON.parse(event.data);
+                if (data.c) {
+                    currentPrice = parseFloat(data.c);
+                    const change = parseFloat(data.P);
+                    const changeElem = document.getElementById("change24");
+                    if (changeElem) {
+                        const color = change >= 0 ? "#00e676" : "#ff5252";
+                        changeElem.innerHTML = `<span style="color:${color}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</span>`;
+                    }
+                    const priceElem = document.getElementById("currentPrice");
+                    if (priceElem) priceElem.innerHTML = `$${currentPrice.toFixed(2)}`;
+                }
+            } catch(e) {}
+        };
+        
+        ws.onerror = (error) => {
+            log(`?? WebSocket error, falling back to REST`, "#ffca28");
+        };
+        
+        ws.onclose = () => {
+            if (isRunning) {
+                log(`?? WebSocket closed, reconnecting in 5s...`, "#ffca28");
+                setTimeout(() => { if(isRunning) connectWebSocket(); }, 5000);
+            }
+        };
+    } catch(e) {
+        log(`?? WebSocket failed: ${e.message}`, "#ff5252");
+    }
+}
+
+// =========================
+// ?????? / ?????????
+// =========================
+async function startAnalysis() {
+    if (isRunning) return;
+    
+    isRunning = true;
+    statusText.textContent = "Online (Real-time)";
+    statusDot.classList.add("online");
+    startBtn.textContent = "? Stop Analysis";
+    startBtn.classList.add("stop");
+    
+    log("?? SMC Analyzer Pro STARTED", "#00ff95");
+    log("?? Mode: Real-time WebSocket + REST every 5 sec", "#4da3ff");
+    
+    if (CONFIG.useWebSocket) connectWebSocket();
+    
+    await analyzeMarket();
+    intervalId = setInterval(analyzeMarket, CONFIG.updateInterval);
+}
+
+function stopAnalysis() {
+    if (!isRunning) return;
+    
+    isRunning = false;
+    statusText.textContent = "Offline";
+    statusDot.classList.remove("online");
+    startBtn.textContent = "? Start Analysis";
+    startBtn.classList.remove("stop");
+    
+    if (ws) {
+        ws.close();
+        ws = null;
+    }
+    if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+    }
+    
+    log("? Analysis stopped", "#ffd54f");
+}
+
+// =========================
+// ??????????? ???????
+// =========================
+startBtn.addEventListener("click", () => {
+    if (isRunning) stopAnalysis();
+    else startAnalysis();
+});
+
+symbolSelect.addEventListener("change", () => {
+    currentSymbol = symbolSelect.value;
+    if (isRunning) {
+        log(`?? Symbol changed to ${currentSymbol}, reconnecting...`, "#4da3ff");
+        if (ws) ws.close();
+        connectWebSocket();
+        analyzeMarket();
+    }
+});
+
+clearConsoleBtn.addEventListener("click", () => {
+    if (consoleBox) consoleBox.innerHTML = '<div class="log blue">[SYSTEM] Console cleared</div>';
+});
+
+// =========================
+// ?????????????
+// =========================
+log("? SMC Market Analyzer Pro v3.0 loaded", "#00ff95");
+log("?? Features: WebSocket Realtime, BOS, CHOCH, FVG, OB, Liquidity Sweep", "#b388ff");
+log("? Press Start to begin real-time analysis", "#8b98a9");
+</script>
+</body>
+</html>
